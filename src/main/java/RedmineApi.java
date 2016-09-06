@@ -1,5 +1,7 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.sun.javafx.fxml.builder.URLBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -7,10 +9,15 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 /**
  * Created by dmitry on 06.09.16.
@@ -18,6 +25,8 @@ import java.io.IOException;
 public class RedmineApi {
     private String redmineUrl;
     private String apiKey;
+
+    private CloseableHttpClient client;
 
     public RedmineApi(String redmineUrl, String apiKey) {
         this.setRedmineUrl(redmineUrl);
@@ -33,11 +42,11 @@ public class RedmineApi {
         }
     }
 
-    public UserData getCurrentUser() throws IOException {
-        String url = redmineUrl + "/users/current.json?key=" + apiKey;
-        System.out.println(url);
+    private String getRequest(String url) throws IOException {
+        String endPoint = redmineUrl + url + "?key=" + apiKey;
+
         CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
+        HttpGet httpGet = new HttpGet(endPoint);
         CloseableHttpResponse response = httpclient.execute(httpGet);
         try {
             StatusLine statusLine = response.getStatusLine();
@@ -49,32 +58,43 @@ public class RedmineApi {
             if (entity == null)
                 throw new ClientProtocolException("Response contains no content");
 
-            Gson gson = new GsonBuilder()
-                            .registerTypeAdapter(UserData.class, new NestedDeserializer<UserData>("user"))
-                            .create();
-            return gson.fromJson(EntityUtils.toString(entity), UserData.class);
+            return EntityUtils.toString(entity);
         } finally {
             response.close();
         }
     }
 
+    public UserData getCurrentUser() throws IOException {
+        String response = getRequest("/users/current.json");
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(UserData.class, new NestedDeserializer<UserData>("user"))
+                .create();
+        return gson.fromJson(response, UserData.class);
+    }
+
+    public ArrayList<IssueData> getIssues() throws IOException {
+        Type issuesArray = new TypeToken<ArrayList<IssueData>>(){}.getType();
+        String response = getRequest("/issues.json");
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(issuesArray, new NestedDeserializer<ArrayList<IssueData>>("issues"))
+                .create();
+        return gson.fromJson(response, issuesArray);
+
+    }
+
     public String getRedmineUrl() {
         return this.redmineUrl;
     }
-
     public void setRedmineUrl(String redmineUrl) {
         this.redmineUrl = StringUtils.stripEnd(redmineUrl, "/");
     }
-
     public String getApiKey() {
         return apiKey;
     }
-
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
     }
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, URISyntaxException {
         RedmineApi redmineApi = new RedmineApi("http://agile.dealerpoint.biz", "e584a1aeb2eb8247bd4d535da499999a889ef315");
         System.out.println("Checking " + redmineApi.checkAccess());
     }

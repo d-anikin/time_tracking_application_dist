@@ -71,6 +71,7 @@ public class LoginForm extends JDialog {
             if (redmineApi.checkAccess()) {
                 userPrefs.put("redmine_url", textFieldUrl.getText());
                 userPrefs.put("redmine_api_key", textFieldKey.getText());
+                dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Wrong url or api key!", "Login", JOptionPane.ERROR_MESSAGE);
             }
