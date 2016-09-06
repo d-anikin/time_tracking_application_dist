@@ -25,12 +25,12 @@ public class App {
     }
 
     public void mainForm() {
-        System.out.print("Show main form");
+        MainForm mainForm = new MainForm();
     }
 
     public static void main(String[] args) {
         App app = new App();
-        System.exit(0);
+//        System.exit(0);
     }
 
     public App() {
