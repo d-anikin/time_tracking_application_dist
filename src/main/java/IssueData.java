@@ -1,3 +1,5 @@
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 
 /**
@@ -6,6 +8,8 @@ import java.io.Serializable;
 public class IssueData implements Serializable {
     private Long id;
     private String subject;
+    private ItemData status;
+    @SerializedName("assigned_to") private ItemData assignedTo;
 
     public Long getId() {
         return id;
@@ -21,6 +25,22 @@ public class IssueData implements Serializable {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public ItemData getStatus() {
+        return status;
+    }
+
+    public void setStatus(ItemData status) {
+        this.status = status;
+    }
+
+    public ItemData getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(ItemData assignedTo) {
+        this.assignedTo = assignedTo;
     }
 
     @Override

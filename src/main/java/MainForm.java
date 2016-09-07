@@ -42,11 +42,9 @@ public class MainForm extends JFrame {
             issuesTable.setModel(model);
             for (int i = 0; i < 2; i++) {
                 column = issuesTable.getColumnModel().getColumn(i);
-                if (i == 1) {
-                    column.setPreferredWidth(500);
-                } else {
-                    column.setPreferredWidth(50);
-                }
+                if (i == 0) { column.setPreferredWidth(50); }
+                else if (i == 1) { column.setPreferredWidth(300); }
+                else { column.setPreferredWidth(300); }
             }
         } catch (Exception e) {
             System.out.println(e);

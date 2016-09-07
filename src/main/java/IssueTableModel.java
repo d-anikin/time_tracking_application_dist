@@ -26,7 +26,7 @@ public class IssueTableModel implements TableModel {
     }
 
     public int getColumnCount() {
-        return 2;
+        return 4;
     }
 
     public String getColumnName(int columnIndex) {
@@ -35,6 +35,10 @@ public class IssueTableModel implements TableModel {
                 return "ID";
             case 1:
                 return "Subject";
+            case 2:
+                return "Status";
+            case 3:
+                return "Assignee";
         }
         return "";
     }
@@ -50,6 +54,14 @@ public class IssueTableModel implements TableModel {
                 return issue.getId();
             case 1:
                 return issue.getSubject();
+            case 2:
+                ItemData status = issue.getStatus();
+                if (status != null) { return status.getName(); }
+                else { return ""; }
+            case 3:
+                ItemData assignee = issue.getAssignedTo();
+                if (assignee != null) { return assignee.getName(); }
+                else { return ""; }
         }
         return "";
     }
