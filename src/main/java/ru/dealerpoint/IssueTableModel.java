@@ -1,3 +1,5 @@
+package ru.dealerpoint;
+
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import java.util.ArrayList;

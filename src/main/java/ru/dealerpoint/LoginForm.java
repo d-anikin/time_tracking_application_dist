@@ -1,3 +1,7 @@
+package ru.dealerpoint;
+
+import ru.dealerpoint.RedmineApi;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -17,7 +21,7 @@ public class LoginForm extends JDialog {
         this.userPrefs = userPrefs;
         setTitle("Login");
         setToPreferred();
-//        setContentPane(contentPane);
+        setContentPane(contentPane);
         setResizable(false);
         setModal(true);
         pack();
@@ -78,8 +82,7 @@ public class LoginForm extends JDialog {
         }
     }
 
-    public void setToPreferred()
-    {
+    public void setToPreferred() {
         textFieldUrl.setText(userPrefs.get("redmine_url", ""));
         textFieldKey.setText(userPrefs.get("redmine_api_key", ""));
     }
@@ -87,4 +90,5 @@ public class LoginForm extends JDialog {
     private void onClose() {
         System.exit(0);
     }
+
 }

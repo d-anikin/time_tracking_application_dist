@@ -1,3 +1,5 @@
+package ru.dealerpoint;
+
 import java.io.Serializable;
 
 /**

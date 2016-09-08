@@ -1,3 +1,5 @@
+package ru.dealerpoint;
+
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.util.ArrayList;
@@ -20,8 +22,8 @@ public class MainForm extends JFrame {
     private RedmineApi redmineApi;
 
     public MainForm() {
-        setTitle("Redmine Time Tracker");
-//        setContentPane(contentPane);
+        super("Redmine Time Tracker");
+        setContentPane(contentPane);
         setResizable(false);
         pack();
         setLocationRelativeTo(null);
@@ -40,9 +42,13 @@ public class MainForm extends JFrame {
             issuesTable.setModel(model);
             for (int i = 0; i < 2; i++) {
                 column = issuesTable.getColumnModel().getColumn(i);
-                if (i == 0) { column.setPreferredWidth(50); }
-                else if (i == 1) { column.setPreferredWidth(300); }
-                else { column.setPreferredWidth(300); }
+                if (i == 0) {
+                    column.setPreferredWidth(50);
+                } else if (i == 1) {
+                    column.setPreferredWidth(300);
+                } else {
+                    column.setPreferredWidth(300);
+                }
             }
         } catch (Exception e) {
             System.out.println(e);
@@ -69,4 +75,5 @@ public class MainForm extends JFrame {
     public static void main(String[] args) {
         MainForm mainForm = new MainForm();
     }
+
 }
