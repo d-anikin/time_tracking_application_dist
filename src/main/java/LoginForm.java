@@ -17,7 +17,7 @@ public class LoginForm extends JDialog {
         this.userPrefs = userPrefs;
         setTitle("Login");
         setToPreferred();
-        setContentPane(contentPane);
+//        setContentPane(contentPane);
         setResizable(false);
         setModal(true);
         pack();

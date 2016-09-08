@@ -2,7 +2,6 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.sun.javafx.fxml.builder.URLBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -10,14 +9,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 /**
@@ -26,8 +22,6 @@ import java.util.ArrayList;
 public class RedmineApi {
     private String redmineUrl;
     private String apiKey;
-
-    private CloseableHttpClient client;
 
     public RedmineApi(String redmineUrl, String apiKey) {
         this.setRedmineUrl(redmineUrl);
@@ -88,17 +82,16 @@ public class RedmineApi {
     public String getRedmineUrl() {
         return this.redmineUrl;
     }
+
     public void setRedmineUrl(String redmineUrl) {
         this.redmineUrl = StringUtils.stripEnd(redmineUrl, "/");
     }
+
     public String getApiKey() {
         return apiKey;
     }
+
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
-    }
-    public static void main(String[] args) throws IOException, URISyntaxException {
-        RedmineApi redmineApi = new RedmineApi("http://agile.dealerpoint.biz", "e584a1aeb2eb8247bd4d535da499999a889ef315");
-        System.out.println("Checking " + redmineApi.checkAccess());
     }
 }

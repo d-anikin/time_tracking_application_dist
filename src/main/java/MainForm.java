@@ -1,8 +1,6 @@
 import javax.swing.*;
 import javax.swing.table.TableColumn;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.prefs.Preferences;
 
 /**
@@ -23,7 +21,7 @@ public class MainForm extends JFrame {
 
     public MainForm() {
         setTitle("Redmine Time Tracker");
-        setContentPane(contentPane);
+//        setContentPane(contentPane);
         setResizable(false);
         pack();
         setLocationRelativeTo(null);
