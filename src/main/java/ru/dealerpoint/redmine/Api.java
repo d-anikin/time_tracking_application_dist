@@ -1,6 +1,5 @@
-package ru.dealerpoint;
+package ru.dealerpoint.redmine;
 
-import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -14,26 +13,25 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import ru.dealerpoint.NestedDeserializer;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-/**
- * Created by dmitry on 06.09.16.
- */
-public class RedmineApi {
+public class Api {
     private String redmineUrl;
     private String apiKey;
 
-    public RedmineApi(String redmineUrl, String apiKey) {
+    public Api(String redmineUrl, String apiKey) {
         this.setRedmineUrl(redmineUrl);
         this.setApiKey(apiKey);
     }
 
     public boolean checkAccess() {
         try {
-            UserData userData = this.getCurrentUser();
-            return userData != null;
+            User user = this.getCurrentUser();
+            return user != null;
         } catch (Exception e) {
             return false;
         }
@@ -68,20 +66,16 @@ public class RedmineApi {
         }
     }
 
-    public UserData getCurrentUser() throws IOException {
+    public User getCurrentUser() throws IOException {
         String response = getRequest("/users/current.json");
         Gson gson = new GsonBuilder()
-                .registerTypeAdapter(UserData.class, new NestedDeserializer<UserData>("user"))
+                .registerTypeAdapter(User.class, new NestedDeserializer<User>("user"))
                 .create();
-        return gson.fromJson(response, UserData.class);
+        return gson.fromJson(response, User.class);
     }
 
-    public ArrayList<IssueData> getIssues() throws IOException {
-        return getIssues(null);
-    }
-
-    public ArrayList<IssueData> getIssues(Long queryId) throws IOException {
-        Type type = new TypeToken<ArrayList<IssueData>>(){}.getType();
+    public IssuesData getIssues(Long queryId, int pageIndex) throws IOException {
+        Type type = new TypeToken<ArrayList<Issue>>(){}.getType();
 
         String response;
         if (queryId != null) {
@@ -89,22 +83,20 @@ public class RedmineApi {
         } else {
             response = getRequest("/issues.json");
         }
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(type, new NestedDeserializer<ArrayList<IssueData>>("issues"))
-                .create();
-        return gson.fromJson(response, type);
+
+        return new IssuesData(response);
     }
 
-    public ArrayList<ItemData> getQueries() {
-        Type type = new TypeToken<ArrayList<ItemData>>(){}.getType();
+    public ArrayList<Item> getQueries() {
+        Type type = new TypeToken<ArrayList<Item>>(){}.getType();
         try {
             String response = getRequest("/queries.json");
             Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(type, new NestedDeserializer<ArrayList<ItemData>>("queries"))
+                    .registerTypeAdapter(type, new NestedDeserializer<ArrayList<Item>>("queries"))
                     .create();
             return gson.fromJson(response, type);
         } catch (Exception e) {
-            return new ArrayList<ItemData>();
+            return new ArrayList<Item>();
         }
     }
 

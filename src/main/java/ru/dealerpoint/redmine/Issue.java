@@ -1,17 +1,14 @@
-package ru.dealerpoint;
+package ru.dealerpoint.redmine;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 
-/**
- * Created by Dmitrii A. on 06.09.16.
- */
-public class IssueData implements Serializable {
+public class Issue implements Serializable {
     private Long id;
     private String subject;
-    private ItemData status;
-    @SerializedName("assigned_to") private ItemData assignedTo;
+    private Item status;
+    @SerializedName("assigned_to") private Item assignedTo;
 
     public Long getId() {
         return id;
@@ -29,19 +26,19 @@ public class IssueData implements Serializable {
         this.subject = subject;
     }
 
-    public ItemData getStatus() {
+    public Item getStatus() {
         return status;
     }
 
-    public void setStatus(ItemData status) {
+    public void setStatus(Item status) {
         this.status = status;
     }
 
-    public ItemData getAssignedTo() {
+    public Item getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(ItemData assignedTo) {
+    public void setAssignedTo(Item assignedTo) {
         this.assignedTo = assignedTo;
     }
 

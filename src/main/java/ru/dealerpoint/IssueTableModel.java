@@ -1,21 +1,21 @@
 package ru.dealerpoint;
 
+import ru.dealerpoint.redmine.Issue;
+import ru.dealerpoint.redmine.Item;
+
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by Dmitrii A. on 06.09.16.
- */
 public class IssueTableModel implements TableModel {
 
     private Set<TableModelListener> listeners = new HashSet<TableModelListener>();
 
-    private ArrayList<IssueData> issues;
+    private ArrayList<Issue> issues;
 
-    public IssueTableModel(ArrayList<IssueData> issues) {
+    public IssueTableModel(ArrayList<Issue> issues) {
         this.issues = issues;
     }
 
@@ -50,18 +50,18 @@ public class IssueTableModel implements TableModel {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-        IssueData issue = issues.get(rowIndex);
+        Issue issue = issues.get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return issue.getId();
             case 1:
                 return issue.getSubject();
             case 2:
-                ItemData status = issue.getStatus();
+                Item status = issue.getStatus();
                 if (status != null) { return status.getName(); }
                 else { return ""; }
             case 3:
-                ItemData assignee = issue.getAssignedTo();
+                Item assignee = issue.getAssignedTo();
                 if (assignee != null) { return assignee.getName(); }
                 else { return ""; }
         }

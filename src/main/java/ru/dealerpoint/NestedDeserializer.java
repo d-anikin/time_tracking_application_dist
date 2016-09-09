@@ -4,9 +4,6 @@ import com.google.gson.*;
 
 import java.lang.reflect.Type;
 
-/**
- * Created by dmitry on 06.09.16.
- */
 public class NestedDeserializer<T> implements JsonDeserializer<T> {
     private String contentKey;
 

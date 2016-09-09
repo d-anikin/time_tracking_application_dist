@@ -1,11 +1,8 @@
-package ru.dealerpoint;
+package ru.dealerpoint.redmine;
 
 import java.io.Serializable;
 
-/**
- * Created by Dmitrii A. on 07.09.16.
- */
-public class ItemData implements Serializable {
+public class Item implements Serializable {
     private Long id;
     private String name;
 

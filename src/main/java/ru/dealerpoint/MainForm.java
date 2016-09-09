@@ -1,5 +1,9 @@
 package ru.dealerpoint;
 
+import ru.dealerpoint.redmine.IssuesData;
+import ru.dealerpoint.redmine.Item;
+import ru.dealerpoint.redmine.Api;
+
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
@@ -7,22 +11,22 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
-/**
- * Created by dmitry on 05.09.16.
- */
 public class MainForm extends JFrame {
     private JComboBox comboBox1;
     private JTabbedPane tabbedPane1;
     private JComboBox cbQueries;
     private JTable issuesTable;
     private JPanel contentPane;
-    private JTextField a45TextField;
-    private JButton a1Button;
-    private JButton button2;
+    private JTextField pageTextField;
+    private JButton prevButton;
+    private JButton nextButton;
+    private JLabel pageCountLabel;
 
     private Preferences userPrefs;
-    private RedmineApi redmineApi;
-    private ArrayList<ItemData> queries;
+    private Api api;
+    private ArrayList<Item> queries;
+    private IssuesData issuesData;
+    private int pageIndex = 0;
 
     public MainForm() {
         super("Redmine Time Tracker");
@@ -34,25 +38,46 @@ public class MainForm extends JFrame {
         userPrefs = Preferences.userRoot().node("redmine_time_tracker_app");
         authorize();
         loadData();
+        setVisible(true);
 
         cbQueries.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onQueriesChanged();
             }
         });
-        setVisible(true);
+        prevButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                setPageIndex(pageIndex - 1);
+                loadIssues();
+            }
+        });
+        nextButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                setPageIndex(pageIndex + 1);
+                loadIssues();
+            }
+        });
+    }
+
+    private void setPageIndex(int value) {
+        if (value >= 0 && value < issuesData.getPageCount()) {
+            pageIndex = value;
+        }
+        pageTextField.setText(Integer.toString(pageIndex + 1));
     }
 
     private void loadData() {
-        queries = redmineApi.getQueries();
+        queries = api.getQueries();
         cbQueries.setModel(new DefaultComboBoxModel(queries.toArray()));
-        onQueriesChanged();
+        loadIssues();
     }
 
-    private void refreshIssues(Long querieId) {
+    private void loadIssues() {
         try {
-            ArrayList<IssueData> issues = redmineApi.getIssues(querieId);
-            IssueTableModel model = new IssueTableModel(issues);
+            issuesData = api.getIssues(getQuerieId(), pageIndex);
+            pageCountLabel.setText("of " + issuesData.getPageCount());
+
+            IssueTableModel model = new IssueTableModel(issuesData.getItems());
             issuesTable.setModel(model);
             TableColumn column = null;
             for (int i = 0; i < 2; i++) {
@@ -74,8 +99,8 @@ public class MainForm extends JFrame {
         if (userPrefs.get("redmine_url", "").isEmpty()) {
             authorizeForm();
         } else {
-            this.redmineApi = new RedmineApi(userPrefs.get("redmine_url", ""), userPrefs.get("redmine_api_key", ""));
-            if (!redmineApi.checkAccess()) {
+            this.api = new Api(userPrefs.get("redmine_url", ""), userPrefs.get("redmine_api_key", ""));
+            if (!api.checkAccess()) {
                 authorizeForm();
             }
         }
@@ -84,17 +109,22 @@ public class MainForm extends JFrame {
     private void authorizeForm() {
         LoginForm dialog = new LoginForm(userPrefs);
         dialog.setVisible(true);
-        this.redmineApi = new RedmineApi(userPrefs.get("redmine_url", ""), userPrefs.get("redmine_api_key", ""));
+        this.api = new Api(userPrefs.get("redmine_url", ""), userPrefs.get("redmine_api_key", ""));
+    }
+
+    public Long getQuerieId() {
+        int index = cbQueries.getSelectedIndex();
+        if (index > -1) {
+            Item query = queries.get(index);
+            return query.getId();
+        } else {
+            return null;
+        }
     }
 
     public void onQueriesChanged() {
-        int index = cbQueries.getSelectedIndex();
-        if (index > -1) {
-            ItemData query = queries.get(index);
-            refreshIssues(query.getId());
-        } else {
-            refreshIssues(null);
-        }
+        setPageIndex(0);
+        loadIssues();
     }
 
     public static void main(String[] args) {

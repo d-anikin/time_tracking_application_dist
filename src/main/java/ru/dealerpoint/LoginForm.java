@@ -1,9 +1,7 @@
 package ru.dealerpoint;
 
-import ru.dealerpoint.RedmineApi;
-
+import ru.dealerpoint.redmine.Api;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
@@ -70,8 +68,8 @@ public class LoginForm extends JDialog {
         } else if (textFieldKey.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "User API key is required!", "Field is required", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            RedmineApi redmineApi = new RedmineApi(textFieldUrl.getText(), textFieldKey.getText());
-            if (redmineApi.checkAccess()) {
+            Api api = new Api(textFieldUrl.getText(), textFieldKey.getText());
+            if (api.checkAccess()) {
                 userPrefs.put("redmine_url", textFieldUrl.getText());
                 userPrefs.put("redmine_api_key", textFieldKey.getText());
                 dispose();
