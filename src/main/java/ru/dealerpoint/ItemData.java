@@ -28,6 +28,6 @@ public class ItemData implements Serializable {
     @Override
     public String toString()
     {
-        return "Item {" + this.id + " - " + this.name + '}';
+        return this.name;
     }
 }

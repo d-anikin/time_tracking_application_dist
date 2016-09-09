@@ -40,7 +40,14 @@ public class RedmineApi {
     }
 
     private String getRequest(String url) throws IOException {
+        return getRequest(url, null);
+    }
+
+    private String getRequest(String url, String params) throws IOException {
         String endPoint = redmineUrl + url + "?key=" + apiKey;
+        if (params != null && !params.isEmpty()) {
+            endPoint += "&" + params;
+        }
 
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(endPoint);
@@ -70,15 +77,35 @@ public class RedmineApi {
     }
 
     public ArrayList<IssueData> getIssues() throws IOException {
-        Type issuesArray = new TypeToken<ArrayList<IssueData>>(){}.getType();
-        String response = getRequest("/issues.json");
-        System.out.println(response);
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(issuesArray, new NestedDeserializer<ArrayList<IssueData>>("issues"))
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .create();
-        return gson.fromJson(response, issuesArray);
+        return getIssues(null);
+    }
 
+    public ArrayList<IssueData> getIssues(Long queryId) throws IOException {
+        Type type = new TypeToken<ArrayList<IssueData>>(){}.getType();
+
+        String response;
+        if (queryId != null) {
+            response = getRequest("/issues.json", "query_id=" + queryId.toString());
+        } else {
+            response = getRequest("/issues.json");
+        }
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(type, new NestedDeserializer<ArrayList<IssueData>>("issues"))
+                .create();
+        return gson.fromJson(response, type);
+    }
+
+    public ArrayList<ItemData> getQueries() {
+        Type type = new TypeToken<ArrayList<ItemData>>(){}.getType();
+        try {
+            String response = getRequest("/queries.json");
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(type, new NestedDeserializer<ArrayList<ItemData>>("queries"))
+                    .create();
+            return gson.fromJson(response, type);
+        } catch (Exception e) {
+            return new ArrayList<ItemData>();
+        }
     }
 
     public String getRedmineUrl() {

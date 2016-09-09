@@ -25,7 +25,6 @@ public class LoginForm extends JDialog {
         setResizable(false);
         setModal(true);
         pack();
-        setSize(new Dimension(450, 140));
         setLocationRelativeTo(null);
         getRootPane().setDefaultButton(buttonLogin);
         buttonLogin.addActionListener(new ActionListener() {

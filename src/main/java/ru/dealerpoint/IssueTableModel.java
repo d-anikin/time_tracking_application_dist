@@ -28,7 +28,7 @@ public class IssueTableModel implements TableModel {
     }
 
     public int getColumnCount() {
-        return 4;
+        return 5;
     }
 
     public String getColumnName(int columnIndex) {
