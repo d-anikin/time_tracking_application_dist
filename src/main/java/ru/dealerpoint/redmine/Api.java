@@ -41,10 +41,10 @@ public class Api {
         return getRequest(url, null);
     }
 
-    private String getRequest(String url, String params) throws IOException {
+    private String getRequest(String url, String[] params) throws IOException {
         String endPoint = redmineUrl + url + "?key=" + apiKey;
-        if (params != null && !params.isEmpty()) {
-            endPoint += "&" + params;
+        if (params != null && params.length > 0) {
+            endPoint += "&" + StringUtils.join(params, '&');
         }
 
         CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -74,12 +74,16 @@ public class Api {
         return gson.fromJson(response, User.class);
     }
 
-    public IssuesData getIssues(Long queryId, int pageIndex) throws IOException {
+    public IssuesData getIssues(Long queryId, int offset) throws IOException {
         Type type = new TypeToken<ArrayList<Issue>>(){}.getType();
 
         String response;
         if (queryId != null) {
-            response = getRequest("/issues.json", "query_id=" + queryId.toString());
+            String[] params = {
+                "query_id=" + queryId.toString(),
+                "offset=" + offset
+            };
+            response = getRequest("/issues.json", params);
         } else {
             response = getRequest("/issues.json");
         }

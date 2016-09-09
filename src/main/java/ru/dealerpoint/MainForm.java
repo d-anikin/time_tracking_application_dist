@@ -74,7 +74,7 @@ public class MainForm extends JFrame {
 
     private void loadIssues() {
         try {
-            issuesData = api.getIssues(getQuerieId(), pageIndex);
+            issuesData = api.getIssues(getQuerieId(), getIssuesOffset());
             pageCountLabel.setText("of " + issuesData.getPageCount());
 
             IssueTableModel model = new IssueTableModel(issuesData.getItems());
@@ -119,6 +119,14 @@ public class MainForm extends JFrame {
             return query.getId();
         } else {
             return null;
+        }
+    }
+
+    public int getIssuesOffset() {
+        if (issuesData != null) {
+            return  issuesData.getLimit() * pageIndex;
+        } else {
+            return 0;
         }
     }
 
