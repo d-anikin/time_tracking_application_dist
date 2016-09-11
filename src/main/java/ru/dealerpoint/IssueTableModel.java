@@ -5,6 +5,7 @@ import ru.dealerpoint.redmine.Item;
 
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +25,10 @@ public class IssueTableModel implements TableModel {
     }
 
     public Class<?> getColumnClass(int columnIndex) {
+        switch (columnIndex) {
+            case 4:
+                return Button.class;
+        }
         return String.class;
     }
 
@@ -69,7 +74,7 @@ public class IssueTableModel implements TableModel {
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return false;
+        return columnIndex == 4;
     }
 
     public void removeTableModelListener(TableModelListener listener) {

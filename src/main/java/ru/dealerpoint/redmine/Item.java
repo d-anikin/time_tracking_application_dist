@@ -1,10 +1,13 @@
 package ru.dealerpoint.redmine;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 
 public class Item implements Serializable {
     private Long id;
     private String name;
+    @SerializedName("is_default") private Boolean isDefault = false;
 
     public Long getId() {
         return id;
@@ -20,6 +23,14 @@ public class Item implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Boolean getDefault() {
+        return isDefault;
+    }
+
+    public void setDefault(Boolean aDefault) {
+        isDefault = aDefault;
     }
 
     @Override

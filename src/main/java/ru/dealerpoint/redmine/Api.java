@@ -15,6 +15,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import ru.dealerpoint.NestedDeserializer;
 
+import javax.swing.text.StyledEditorKit;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -23,18 +24,13 @@ public class Api {
     private String redmineUrl;
     private String apiKey;
 
+    static public String getVersion() {
+        return "0.0.1";
+    }
+
     public Api(String redmineUrl, String apiKey) {
         this.setRedmineUrl(redmineUrl);
         this.setApiKey(apiKey);
-    }
-
-    public boolean checkAccess() {
-        try {
-            User user = this.getCurrentUser();
-            return user != null;
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     private String getRequest(String url) throws IOException {
@@ -66,6 +62,34 @@ public class Api {
         }
     }
 
+    private ArrayList<Item> getItems(String path, String keyName) {
+        Type type = new TypeToken<ArrayList<Item>>(){}.getType();
+        try {
+            String response = getRequest(path);
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(type, new NestedDeserializer<ArrayList<Item>>(keyName))
+                    .create();
+            return gson.fromJson(response, type);
+        } catch (Exception e) {
+            return new ArrayList<Item>();
+        }
+    }
+
+    public Details getDetails() {
+        try {
+            String response = getRequest("/time_tracking_application/details.json");
+            Gson gson = new Gson();
+            return gson.fromJson(response, Details.class);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public Boolean checkAccess() {
+        Details details = getDetails();
+        return (details != null && details.getVersion().equals(Api.getVersion()));
+    }
+
     public User getCurrentUser() throws IOException {
         String response = getRequest("/users/current.json");
         Gson gson = new GsonBuilder()
@@ -80,8 +104,9 @@ public class Api {
         String response;
         if (queryId != null) {
             String[] params = {
-                "query_id=" + queryId.toString(),
-                "offset=" + offset
+                    "query_id=" + queryId.toString(),
+                    "offset=" + offset,
+                    "limit=100"
             };
             response = getRequest("/issues.json", params);
         } else {
@@ -91,17 +116,32 @@ public class Api {
         return new IssuesData(response);
     }
 
-    public ArrayList<Item> getQueries() {
-        Type type = new TypeToken<ArrayList<Item>>(){}.getType();
+    public Issue getIssue(Long id) {
         try {
-            String response = getRequest("/queries.json");
+            String response = getRequest("/issues/" + id.toString() + ".json");
             Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(type, new NestedDeserializer<ArrayList<Item>>("queries"))
+                    .registerTypeAdapter(Issue.class, new NestedDeserializer<Issue>("issue"))
                     .create();
-            return gson.fromJson(response, type);
+            return gson.fromJson(response, Issue.class);
         } catch (Exception e) {
-            return new ArrayList<Item>();
+            return null;
         }
+    }
+
+    public Issue startWork(Long id) {
+        return null;
+    }
+
+    public Issue stopWork(Long id) {
+        return null;
+    }
+
+    public ArrayList<Item> getQueries() {
+        return getItems("/queries.json", "queries");
+    }
+
+    public ArrayList<Item> getActivities() {
+        return getItems("/enumerations/time_entry_activities.json", "time_entry_activities");
     }
 
     public String getRedmineUrl() {

@@ -1,6 +1,8 @@
 package ru.dealerpoint;
 
 import ru.dealerpoint.redmine.Api;
+import ru.dealerpoint.redmine.Details;
+
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.prefs.Preferences;
@@ -13,6 +15,7 @@ public class LoginForm extends JDialog {
     private JButton buttonClose;
     private JTextField textFieldUrl;
     private JTextField textFieldKey;
+    private JLabel versionLabel;
     private Preferences userPrefs;
 
     public LoginForm(Preferences userPrefs) {
@@ -22,6 +25,7 @@ public class LoginForm extends JDialog {
         setContentPane(contentPane);
         setResizable(false);
         setModal(true);
+        versionLabel.setText("Version: " + Api.getVersion());
         pack();
         setLocationRelativeTo(null);
         getRootPane().setDefaultButton(buttonLogin);
@@ -55,9 +59,10 @@ public class LoginForm extends JDialog {
     }
 
     private boolean isUrlValid() {
-        Pattern pattern = Pattern.compile("^https?://.*?\\..*?$");
-        Matcher matcher = pattern.matcher(textFieldUrl.getText());
-        return matcher.find();
+//        Pattern pattern = Pattern.compile("^https?://.*?\\..*?$");
+//        Matcher matcher = pattern.matcher(textFieldUrl.getText());
+//        return matcher.find();
+        return !textFieldUrl.getText().isEmpty();
     }
 
     private void onLogin() {
@@ -69,12 +74,15 @@ public class LoginForm extends JDialog {
             JOptionPane.showMessageDialog(this, "User API key is required!", "Field is required", JOptionPane.INFORMATION_MESSAGE);
         } else {
             Api api = new Api(textFieldUrl.getText(), textFieldKey.getText());
-            if (api.checkAccess()) {
+            Details details = api.getDetails();
+            if (details == null) {
+                JOptionPane.showMessageDialog(this, "Wrong url or api key!", "Login", JOptionPane.ERROR_MESSAGE);
+            } else if (details.getVersion().equals(Api.getVersion())) {
                 userPrefs.put("redmine_url", textFieldUrl.getText());
                 userPrefs.put("redmine_api_key", textFieldKey.getText());
                 dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Wrong url or api key!", "Login", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please update your application to continue!", "Login", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

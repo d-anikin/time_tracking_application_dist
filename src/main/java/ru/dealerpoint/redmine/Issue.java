@@ -8,6 +8,8 @@ public class Issue implements Serializable {
     private Long id;
     private String subject;
     private Item status;
+    @SerializedName("estimated_hours") private Float estimatedHours;
+    @SerializedName("spent_hours") private Float spentHours;
     @SerializedName("assigned_to") private Item assignedTo;
 
     public Long getId() {
@@ -40,6 +42,22 @@ public class Issue implements Serializable {
 
     public void setAssignedTo(Item assignedTo) {
         this.assignedTo = assignedTo;
+    }
+
+    public Float getEstimatedHours() {
+        return estimatedHours == null ? 0 : estimatedHours;
+    }
+
+    public void setEstimatedHours(Float estimatedHours) {
+        this.estimatedHours = estimatedHours;
+    }
+
+    public Float getSpentHours() {
+        return spentHours == null ? 0 : spentHours;
+    }
+
+    public void setSpentHours(Float spentHours) {
+        this.spentHours = spentHours;
     }
 
     @Override
