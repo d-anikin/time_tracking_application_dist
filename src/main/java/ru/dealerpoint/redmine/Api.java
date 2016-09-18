@@ -2,20 +2,20 @@ package ru.dealerpoint.redmine;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import ru.dealerpoint.NestedDeserializer;
 
-import javax.swing.text.StyledEditorKit;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -23,32 +23,35 @@ import java.util.ArrayList;
 public class Api {
     private String redmineUrl;
     private String apiKey;
+    private Session session = null;
 
     static public String getVersion() {
         return "0.0.1";
     }
 
     public Api(String redmineUrl, String apiKey) {
+        this(redmineUrl, apiKey, null);
+    }
+
+    public Api(String redmineUrl, String apiKey, Session session) {
         this.setRedmineUrl(redmineUrl);
         this.setApiKey(apiKey);
+        this.session = session;
     }
 
-    private String getRequest(String url) throws IOException {
-        return getRequest(url, null);
-    }
-
-    private String getRequest(String url, String[] params) throws IOException {
-        String endPoint = redmineUrl + url + "?key=" + apiKey;
-        if (params != null && params.length > 0) {
-            endPoint += "&" + StringUtils.join(params, '&');
-        }
-
+    /* private */
+    private String makeRequest(HttpUriRequest request) throws IOException {
         CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(endPoint);
-        CloseableHttpResponse response = httpclient.execute(httpGet);
+        CloseableHttpResponse response = httpclient.execute(request);
         try {
             StatusLine statusLine = response.getStatusLine();
             HttpEntity entity = response.getEntity();
+
+            if (statusLine.getStatusCode() == 401)
+                throw new ApiWrongKeyException("API access key is wrong!");
+
+            if (statusLine.getStatusCode() == 403)
+                throw new ApiAuthorizationException("You are not authorized to access this action!");
 
             if (statusLine.getStatusCode() >= 300)
                 throw new HttpResponseException(statusLine.getStatusCode(), statusLine.getReasonPhrase());
@@ -60,6 +63,52 @@ public class Api {
         } finally {
             response.close();
         }
+    }
+
+    private String getEndPoint(String url) {
+        String endPoint = redmineUrl + url + "?key=" + apiKey;
+        if (session != null && session.getTtaSession() != null)
+            endPoint += "&tta_session=" + session.getTtaSession();
+        return endPoint;
+    }
+
+    private String getRequest(String url) throws IOException {
+        return getRequest(url, null);
+    }
+
+    private String getRequest(String url, String[] params) throws IOException {
+        String endPoint = getEndPoint(url);
+        if (params != null && params.length > 0)
+            endPoint += "&" + StringUtils.join(params, '&');
+
+        HttpGet httpGet = new HttpGet(endPoint);
+        return makeRequest(httpGet);
+    }
+
+    private String postRequest(String url, String json) throws IOException {
+        String endPoint = getEndPoint(url);
+        HttpPost httpPost = new HttpPost(endPoint);
+        httpPost.setHeader("Content-Type", "application/json");
+        if (json != null) {
+            httpPost.setEntity(new StringEntity(json, "UTF-8"));
+        }
+        return makeRequest(httpPost);
+    }
+
+    private String putRequest(String url, String json) throws IOException {
+        String endPoint = getEndPoint(url);
+        HttpPut httpPut = new HttpPut(endPoint);
+        httpPut.setHeader("Content-Type", "application/json");
+        if (json != null) {
+            httpPut.setEntity(new StringEntity(json, "UTF-8"));
+        }
+        return makeRequest(httpPut);
+    }
+
+    private String deleteRequest(String url) throws IOException {
+        String endPoint = getEndPoint(url);
+        HttpDelete httpPut = new HttpDelete(endPoint);
+        return makeRequest(httpPut);
     }
 
     private ArrayList<Item> getItems(String path, String keyName) {
@@ -75,19 +124,22 @@ public class Api {
         }
     }
 
-    public Details getDetails() {
-        try {
-            String response = getRequest("/time_tracking_application/details.json");
+    /* public */
+    public Session createSession() throws IOException {
+        if (session == null) {
+            String response = postRequest("/tta/session.json", null);
             Gson gson = new Gson();
-            return gson.fromJson(response, Details.class);
-        } catch (IOException e) {
-            return null;
+            Session tmpSession = gson.fromJson(response, Session.class);
+            if (!tmpSession.getVersion().equals(Api.getVersion()))
+                throw new ApiWrongVersionException("Please update your application to continue!");
+            session = tmpSession;
         }
+        return session;
     }
 
-    public Boolean checkAccess() {
-        Details details = getDetails();
-        return (details != null && details.getVersion().equals(Api.getVersion()));
+    public void destroySession() throws IOException {
+        deleteRequest("/tta/session.json");
+        session = null;
     }
 
     public User getCurrentUser() throws IOException {
@@ -98,22 +150,15 @@ public class Api {
         return gson.fromJson(response, User.class);
     }
 
-    public IssuesData getIssues(Long queryId, int offset) throws IOException {
+    public ArrayList<Issue> getIssues() throws IOException {
         Type type = new TypeToken<ArrayList<Issue>>(){}.getType();
 
         String response;
-        if (queryId != null) {
-            String[] params = {
-                    "query_id=" + queryId.toString(),
-                    "offset=" + offset,
-                    "limit=100"
-            };
-            response = getRequest("/issues.json", params);
-        } else {
-            response = getRequest("/issues.json");
-        }
-
-        return new IssuesData(response);
+        response = getRequest("/tta/issues.json");
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(type, new NestedDeserializer<ArrayList<Issue>>("issues"))
+                .create();
+        return gson.fromJson(response, type);
     }
 
     public Issue getIssue(Long id) {
@@ -128,12 +173,43 @@ public class Api {
         }
     }
 
-    public Issue startWork(Long id) {
-        return null;
+    public void idle() throws IOException {
+        String response = getRequest("/tta/idle.json");
     }
 
-    public Issue stopWork(Long id) {
-        return null;
+    public TimeEntry startWork(Long issueId) throws IOException {
+        JsonObject json = new JsonObject();
+        json.addProperty("issue_id", issueId);
+
+        String response = postRequest("/tta/time_entry/start.json", new Gson().toJson(json));
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(TimeEntry.class, new NestedDeserializer<TimeEntry>("time_entry"))
+                .create();
+        return gson.fromJson(response, TimeEntry.class);
+    }
+
+    public TimeEntry updateWork(TimeEntry timeEntry) throws IOException {
+        String response =
+                putRequest(
+                        "/tta/time_entry/" + timeEntry.getId().toString() + ".json",
+                        new Gson().toJson(timeEntry)
+                );
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(TimeEntry.class, new NestedDeserializer<TimeEntry>("time_entry"))
+                .create();
+        return gson.fromJson(response, TimeEntry.class);
+    }
+
+    public TimeEntry stopWork(TimeEntry timeEntry) throws IOException {
+        String response =
+                putRequest(
+                        "/tta/time_entry/" + timeEntry.getId().toString() + "/stop.json",
+                        new Gson().toJson(timeEntry)
+                );
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(TimeEntry.class, new NestedDeserializer<TimeEntry>("time_entry"))
+                .create();
+        return gson.fromJson(response, TimeEntry.class);
     }
 
     public ArrayList<Item> getQueries() {
@@ -149,7 +225,12 @@ public class Api {
     }
 
     public void setRedmineUrl(String redmineUrl) {
-        this.redmineUrl = StringUtils.stripEnd(redmineUrl, "/");
+        String str = StringUtils.stripEnd(redmineUrl, "/");
+        if (StringUtils.startsWithIgnoreCase(str, "http://") || StringUtils.startsWithIgnoreCase(str, "https://")) {
+            this.redmineUrl = str;
+        } else {
+            this.redmineUrl = "http://" + str;
+        }
     }
 
     public String getApiKey() {

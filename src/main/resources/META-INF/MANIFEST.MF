@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: ru.dealerpoint.MainForm
+Main-Class: ru.dealerpoint.TasksForm
 

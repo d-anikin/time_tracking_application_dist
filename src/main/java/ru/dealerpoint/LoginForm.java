@@ -1,13 +1,16 @@
 package ru.dealerpoint;
 
 import ru.dealerpoint.redmine.Api;
-import ru.dealerpoint.redmine.Details;
+import ru.dealerpoint.redmine.Session;
 
 import javax.swing.*;
 import java.awt.event.*;
-import java.util.prefs.Preferences;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.IOException;
+import java.util.*;
+
+interface ILoginFormListener {
+    void onSuccessLogin(String redmineUrl, String redmineApiKey, Session session);
+}
 
 public class LoginForm extends JDialog {
     private JPanel contentPane;
@@ -16,12 +19,12 @@ public class LoginForm extends JDialog {
     private JTextField textFieldUrl;
     private JTextField textFieldKey;
     private JLabel versionLabel;
-    private Preferences userPrefs;
+    private final java.util.List<ILoginFormListener> listeners = new ArrayList<ILoginFormListener>();
 
-    public LoginForm(Preferences userPrefs) {
-        this.userPrefs = userPrefs;
+    public LoginForm(String redmineUrl, String redmineApiKey) {
         setTitle("Login");
-        setToPreferred();
+        textFieldUrl.setText(redmineUrl);
+        textFieldKey.setText(redmineApiKey);
         setContentPane(contentPane);
         setResizable(false);
         setModal(true);
@@ -58,42 +61,30 @@ public class LoginForm extends JDialog {
 
     }
 
-    private boolean isUrlValid() {
-//        Pattern pattern = Pattern.compile("^https?://.*?\\..*?$");
-//        Matcher matcher = pattern.matcher(textFieldUrl.getText());
-//        return matcher.find();
-        return !textFieldUrl.getText().isEmpty();
-    }
-
     private void onLogin() {
         if (textFieldUrl.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Redmine URL is required!", "Field is required", JOptionPane.INFORMATION_MESSAGE);
-        } else if (!isUrlValid()) {
-            JOptionPane.showMessageDialog(this, "Redmine URL is invalid!", "Field is invalid", JOptionPane.INFORMATION_MESSAGE);
         } else if (textFieldKey.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "User API key is required!", "Field is required", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            Api api = new Api(textFieldUrl.getText(), textFieldKey.getText());
-            Details details = api.getDetails();
-            if (details == null) {
-                JOptionPane.showMessageDialog(this, "Wrong url or api key!", "Login", JOptionPane.ERROR_MESSAGE);
-            } else if (details.getVersion().equals(Api.getVersion())) {
-                userPrefs.put("redmine_url", textFieldUrl.getText());
-                userPrefs.put("redmine_api_key", textFieldKey.getText());
+            String url = textFieldUrl.getText();
+            String key = textFieldKey.getText();
+            Api api = new Api(url, key);
+            try {
+                Session session = api.createSession();
+                for (ILoginFormListener listener : listeners) {
+                    listener.onSuccessLogin(url, key, session);
+                }
                 dispose();
-            } else {
-                JOptionPane.showMessageDialog(this, "Please update your application to continue!", "Login", JOptionPane.ERROR_MESSAGE);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
             }
         }
-    }
-
-    public void setToPreferred() {
-        textFieldUrl.setText(userPrefs.get("redmine_url", ""));
-        textFieldKey.setText(userPrefs.get("redmine_api_key", ""));
     }
 
     private void onClose() {
         System.exit(0);
     }
-
+    public void addLoginFormListener(ILoginFormListener l) { listeners.add(l); }
+    public void removeLoginFormListener(ILoginFormListener l) { listeners.remove(l); }
 }

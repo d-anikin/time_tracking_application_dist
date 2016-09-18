@@ -16,7 +16,11 @@ public class IssueTableModel implements TableModel {
 
     private ArrayList<Issue> issues;
 
-    public IssueTableModel(ArrayList<Issue> issues) {
+    public IssueTableModel() {
+        this.issues = new ArrayList<Issue>();
+    }
+
+    public void setIssues(ArrayList<Issue> issues) {
         this.issues = issues;
     }
 
@@ -24,16 +28,10 @@ public class IssueTableModel implements TableModel {
         listeners.add(listener);
     }
 
-    public Class<?> getColumnClass(int columnIndex) {
-        switch (columnIndex) {
-            case 4:
-                return Button.class;
-        }
-        return String.class;
-    }
+    public Class<?> getColumnClass(int columnIndex) { return String.class; }
 
     public int getColumnCount() {
-        return 5;
+        return 4;
     }
 
     public String getColumnName(int columnIndex) {
@@ -62,9 +60,7 @@ public class IssueTableModel implements TableModel {
             case 1:
                 return issue.getSubject();
             case 2:
-                Item status = issue.getStatus();
-                if (status != null) { return status.getName(); }
-                else { return ""; }
+                return issue.getStatus().getName();
             case 3:
                 Item assignee = issue.getAssignedTo();
                 if (assignee != null) { return assignee.getName(); }
@@ -74,7 +70,7 @@ public class IssueTableModel implements TableModel {
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex == 4;
+        return false;
     }
 
     public void removeTableModelListener(TableModelListener listener) {

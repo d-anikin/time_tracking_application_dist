@@ -8,6 +8,7 @@ public class Issue implements Serializable {
     private Long id;
     private String subject;
     private Item status;
+    private Item author;
     @SerializedName("estimated_hours") private Float estimatedHours;
     @SerializedName("spent_hours") private Float spentHours;
     @SerializedName("assigned_to") private Item assignedTo;
@@ -58,6 +59,14 @@ public class Issue implements Serializable {
 
     public void setSpentHours(Float spentHours) {
         this.spentHours = spentHours;
+    }
+
+    public Item getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Item author) {
+        this.author = author;
     }
 
     @Override
