@@ -142,22 +142,23 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         });
         offlineTimer = new Timer(5 * 60 * 1000, new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                offlineTimer.stop();
-                Object[] options = {"Остановить", "Буду работать дальше", "Напомнить через 5 минут"};
-                int result = JOptionPane.showOptionDialog(null, "Пора отдыхать!",
-                        getTitle(),
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.INFORMATION_MESSAGE,
-                        null,
-                        options,
-                        options[0]);
-                if (result == 0)
-                    onStopTimeEntry();
-                else if (result == 2)
-                    offlineTimer.restart();
+                if (!isWorkTime()) {
+                    offlineTimer.stop();
+                    Object[] options = {"Остановить", "Буду работать дальше", "Напомнить через 5 минут"};
+                    int result = JOptionPane.showOptionDialog(null, "Пора отдыхать!",
+                            getTitle(),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE,
+                            null,
+                            options,
+                            options[0]);
+                    if (result == 0)
+                        onStopTimeEntry();
+                    else if (result == 2)
+                        offlineTimer.restart();
+                }
             }
         });
-
         onActivate();
     }
 
