@@ -2,6 +2,7 @@ package ru.dealerpoint;
 
 import ru.dealerpoint.redmine.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
@@ -48,11 +49,19 @@ public class TasksForm extends JFrame implements ILoginFormListener {
 
     public TasksForm() {
         super("Redmine Time Tracker");
+
+        try {
+            Image img = ImageIO.read(getClass().getResource("/logo.png"));
+            setIconImage(img);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+
         setContentPane(contentPane);
 //        setResizable(false);
         pack();
         setMinimumSize(new Dimension(320, 280));
-        setSize(new Dimension(320, 280));
+        setSize(new Dimension(320, 560));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         userPrefs = Preferences.userRoot().node("redmine_time_tracker_app");
@@ -192,7 +201,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     private boolean isWorkTime() {
         LocalDateTime now = LocalDateTime.now();
         int hour = now.getHour();
-        return (hour > 8 && hour < 13) || (hour > 14 && hour < 18);
+        return (hour > 8 && hour < 13) || (hour > 13 && hour < 18);
     }
     private boolean isActiveIssue() {
         return activeTimeEntry != null;
