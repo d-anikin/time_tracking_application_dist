@@ -3,6 +3,7 @@ package ru.dealerpoint;
 import ru.dealerpoint.redmine.*;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -13,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.prefs.Preferences;
 
@@ -29,6 +31,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     private JLabel spentHoursLabel;
     private JLabel issueIdLabel;
     private JButton stopButton;
+    private JButton refreshButton;
 
     private Preferences userPrefs;
     private Api api;
@@ -41,6 +44,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     private TimeEntry activeTimeEntry = null;
     private IssueTableModel issueTableModel;
     private java.util.Timer workerTimer;
+    private Timer idleTimer, offlineTimer;
 
     public TasksForm() {
         super("Redmine Time Tracker");
@@ -94,7 +98,6 @@ public class TasksForm extends JFrame implements ILoginFormListener {
                 onStopTimeEntry();
             }
         });
-        onActivate();
         viewButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (isActiveIssue()) {
@@ -115,40 +118,53 @@ public class TasksForm extends JFrame implements ILoginFormListener {
                 onUpdateTimeEntry();
             }
         });
-    }
+        refreshButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                loadIssues();
+            }
+        });
+        idleTimer = new Timer(5 * 60 * 1000, new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                idleTimer.stop();
+                if (isWorkTime()) {
+                    Object[] options = {"Напомнить через 5 минут", "Отстань"};
+                    int result = JOptionPane.showOptionDialog(null, "Таймер не запущен!",
+                            getTitle(),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE,
+                            null,
+                            options,
+                            options[0]);
+                    if (result == 0)
+                        idleTimer.restart();
+                }
+            }
+        });
+        offlineTimer = new Timer(5 * 60 * 1000, new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                offlineTimer.stop();
+                Object[] options = {"Остановить", "Буду работать дальше", "Напомнить через 5 минут"};
+                int result = JOptionPane.showOptionDialog(null, "Пора отдыхать!",
+                        getTitle(),
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE,
+                        null,
+                        options,
+                        options[0]);
+                if (result == 0)
+                    onStopTimeEntry();
+                else if (result == 2)
+                    offlineTimer.restart();
+            }
+        });
 
-    private void initIssuesTable() {
-        issuesTable.clearSelection();
-        if (issueTableModel.getRowCount() > 0) {
-            issuesTable.setRowSelectionInterval(0, 0);
-            issuesTable.requestFocus();
-        }
+        onActivate();
     }
 
     /* Setters and getters */
     private void setUserSession(Session session) {
         userSession = session;
         setTitle("Redmine Time Tracker - " + userSession.getUserName());
-    }
-
-    /* === */
-    private void loadIssues() {
-        try {
-            issues = api.getIssues();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        }
-        issueTableModel.setIssues(issues);
-        initIssuesTable();
-    }
-
-    private void authorizeForm() {
-        String url = userPrefs.get("redmine_url", "");
-        String key = userPrefs.get("redmine_api_key", "");
-        LoginForm dialog = new LoginForm(url, key);
-        dialog.addLoginFormListener(this);
-        dialog.setVisible(true);
     }
 
     private Long getActivitieId() {
@@ -172,6 +188,39 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         }
     }
 
+    private boolean isWorkTime() {
+        LocalDateTime now = LocalDateTime.now();
+        int hour = now.getHour();
+        return (hour > 8 && hour < 13) || (hour > 14 && hour < 18);
+    }
+    private boolean isActiveIssue() {
+        return activeTimeEntry != null;
+    }
+
+    /* === */
+    private void loadIssues() {
+        try {
+            issues = api.getIssues();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
+        issueTableModel.setIssues(issues);
+        issuesTable.clearSelection();
+        if (issueTableModel.getRowCount() > 0) {
+            issuesTable.setRowSelectionInterval(0, 0);
+            issuesTable.requestFocus();
+        }
+    }
+
+    private void authorizeForm() {
+        String url = userPrefs.get("redmine_url", "");
+        String key = userPrefs.get("redmine_api_key", "");
+        LoginForm dialog = new LoginForm(url, key);
+        dialog.addLoginFormListener(this);
+        dialog.setVisible(true);
+    }
+
     /* Helpers */
     private String formatHours(Float timeEntry) {
         int value = Math.round(timeEntry * 60);
@@ -179,7 +228,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         int minutes = value % 60;
         return String.format("%02d:%02d", hours, minutes);
     }
-    
+
     /* Events */
     private void onLogout() {
         userPrefs.remove("redmine_url");
@@ -212,6 +261,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     }
 
     private void runTimers() {
+        idleTimer.start();
         workerTimer = new java.util.Timer();
         TimerTask timerTask = new TimerTask() {
             @Override
@@ -248,10 +298,6 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         this.api = new Api(redmineUrl, redmineApiKey, session);
     }
 
-    private boolean isActiveIssue() {
-        return activeTimeEntry != null;
-    }
-
     private void onStartTimeEntry() {
         try {
             activeTimeEntry = api.startWork(selectedIssue.getId());
@@ -261,6 +307,8 @@ public class TasksForm extends JFrame implements ILoginFormListener {
             spentHoursLabel.setText(formatHours(activeTimeEntry.getHours()));
             taskListPanel.setVisible(false);
             currentTaskPanel.setVisible(true);
+            idleTimer.stop();
+            offlineTimer.restart();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
@@ -288,6 +336,8 @@ public class TasksForm extends JFrame implements ILoginFormListener {
             loadIssues();
             currentTaskPanel.setVisible(false);
             taskListPanel.setVisible(true);
+            offlineTimer.stop();
+            idleTimer.restart();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
