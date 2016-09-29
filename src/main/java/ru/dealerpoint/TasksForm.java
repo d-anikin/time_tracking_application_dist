@@ -7,7 +7,6 @@ import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -160,7 +159,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
                 loadIssues();
             }
         });
-        notifyTimer = new Timer(5 * 60 * 1000, new ActionListener() {
+        notifyTimer = new Timer(2 * 1000, new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 onNotifyTimer();
             }
@@ -213,7 +212,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     private boolean isLunchTime() {
         LocalDateTime now = LocalDateTime.now();
         int hour = now.getHour();
-        return (hour >= userSession.getLanchStartingAt() && hour < userSession.getLanchEndingIn());
+        return (hour >= userSession.getLunchStartingAt() && hour < userSession.getLunchEndingIn());
     }
 
     private boolean isWorkingTime() {
@@ -250,7 +249,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     }
 
     private void onNotifyTimer() {
-        notifyTimer.setInitialDelay(60 * 1000);
+        notifyTimer.setInitialDelay(2 * 1000);
         if (isWorkingTime()) {
             // рабочее время
             if (!isActiveIssue()) {

@@ -49,19 +49,19 @@ public class Session implements Serializable {
         this.dayStartingAt = dayStartingAt;
     }
 
-    public int getLanchEndingIn() {
+    public int getLunchEndingIn() {
         return lunchEndingIn;
     }
 
-    public void setLanchEndingIn(int lunchEndingIn) {
+    public void setLunchEndingIn(int lunchEndingIn) {
         this.lunchEndingIn = lunchEndingIn;
     }
 
-    public int getLanchStartingAt() {
+    public int getLunchStartingAt() {
         return lunchStartingAt;
     }
 
-    public void setLanchStartingAt(int lunchStartingAt) {
+    public void setLunchStartingAt(int lunchStartingAt) {
         this.lunchStartingAt = lunchStartingAt;
     }
 

@@ -26,7 +26,7 @@ public class Api {
     private Session session = null;
 
     static public String getVersion() {
-        return "0.0.2";
+        return "0.0.3";
     }
 
     public Api(String redmineUrl, String apiKey) {
