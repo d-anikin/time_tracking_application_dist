@@ -159,7 +159,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
                 loadIssues();
             }
         });
-        notifyTimer = new Timer(2 * 1000, new ActionListener() {
+        notifyTimer = new Timer(120 * 1000, new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 onNotifyTimer();
             }
@@ -249,7 +249,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     }
 
     private void onNotifyTimer() {
-        notifyTimer.setInitialDelay(2 * 1000);
+        notifyTimer.setInitialDelay(120 * 1000);
         if (isWorkingTime()) {
             // рабочее время
             if (!isActiveIssue()) {
