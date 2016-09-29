@@ -6,8 +6,12 @@ import java.io.Serializable;
 
 public class Session implements Serializable {
     private String version;
-    @SerializedName("tta_session") private String tta_session;
+    @SerializedName("tta_session") private String ttaSession;
     @SerializedName("user_name") private String userName;
+    @SerializedName("day_starting_at") private int dayStartingAt;
+    @SerializedName("day_ending_in") private int dayEndingIn;
+    @SerializedName("lunch_starting_at") private int lunchStartingAt;
+    @SerializedName("lunch_ending_in") private int lunchEndingIn;
 
     public String getVersion() {
         return version;
@@ -26,10 +30,42 @@ public class Session implements Serializable {
     }
 
     public String getTtaSession() {
-        return tta_session;
+        return ttaSession;
     }
 
-    public void setTtaSisseon(String tta_session) {
-        this.tta_session = tta_session;
+    public int getDayEndingIn() {
+        return dayEndingIn;
+    }
+
+    public void setDayEndingIn(int dayEndingIn) {
+        this.dayEndingIn = dayEndingIn;
+    }
+
+    public int getDayStartingAt() {
+        return dayStartingAt;
+    }
+
+    public void setDayStartingAt(int dayStartingAt) {
+        this.dayStartingAt = dayStartingAt;
+    }
+
+    public int getLanchEndingIn() {
+        return lunchEndingIn;
+    }
+
+    public void setLanchEndingIn(int lunchEndingIn) {
+        this.lunchEndingIn = lunchEndingIn;
+    }
+
+    public int getLanchStartingAt() {
+        return lunchStartingAt;
+    }
+
+    public void setLanchStartingAt(int lunchStartingAt) {
+        this.lunchStartingAt = lunchStartingAt;
+    }
+
+    public void setTtaSession(String ttaSession) {
+        this.ttaSession = ttaSession;
     }
 }

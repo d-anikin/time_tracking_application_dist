@@ -1,18 +1,15 @@
 package ru.dealerpoint;
 
 import ru.dealerpoint.redmine.*;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
@@ -20,6 +17,36 @@ import java.util.*;
 import java.util.prefs.Preferences;
 
 public class TasksForm extends JFrame implements ILoginFormListener {
+    private static String[] WORK_MESSAGES = {
+        "Эх, по<b>работать</b> бы!:)",
+            "Пора <b>работать</b>!",
+            "Work, Work опять <b>работа</b>?!",
+            "<b>Работа</b> способна доставить гораздо больше удовольствия",
+            "<b>Работа</b>, <b>работа</b>, опять <b>работа</b>",
+            "Когда люди заняты <b>работой</b>, у них бывает лучшее настроение.",
+            "<b>Работа</b> — лучшее лекарство от всех бед.",
+            "<b>Работать</b> не так скучно, как развлекаться.",
+            "Чем упорнее вы <b>работаете</b>, тем удачливее вы становитесь.",
+            "Для меня жить — значит <b>работать</b>.",
+            "<b>Работайте</b> так, словно деньги не имеют для Вас никакого значения.",
+            "Хорошо <b>работается</b>, когда любишь свою профессию, с увлечением занимаешься ею.",
+            "Сделайте вашу <b>работу</b> наполненной жизнью, а не жизнь наполненной работой.",
+            "Для того чтобы научиться хорошо <b>работать</b>, надо искренне увлекаться <b>работой</b>, без увлечения <b>работать</b> не научишься.",
+            "Наслаждайтесь тем, что вы делаете и вы никогда в своей жизни не будете <b>работать</b>.",
+            "Счастье не в том, чтобы делать всегда, что хочешь, а в том, чтобы всегда хотеть того, что делаешь."
+    };
+    private static String[] LUNCH_MESSAGES = {
+        "Кушать хочешь?",
+            "Любой может испортить обед. Но повар делает это профессионально.",
+            "Жрать time!",
+            "Обед!",
+            "Пора кушать!",
+            "После сытного обеда, ближе кажется победа.",
+            "Жизнь по-настоящему ощущаешь только тогда, когда туго набил брюхо",
+            "Вся жизнь в борьбе: до обеда с голодом, после обеда — со сном."
+    };
+
+
     private JTable issuesTable;
     private JPanel contentPane;
     private JButton startButton;
@@ -45,7 +72,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     private TimeEntry activeTimeEntry = null;
     private IssueTableModel issueTableModel;
     private java.util.Timer workerTimer;
-    private Timer idleTimer, offlineTimer;
+    private Timer notifyTimer;
 
     public TasksForm() {
         super("Redmine Time Tracker");
@@ -58,11 +85,12 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         }
 
         setContentPane(contentPane);
-//        setResizable(false);
+        setResizable(false);
         pack();
         setMinimumSize(new Dimension(320, 280));
-        setSize(new Dimension(320, 560));
-        setLocationRelativeTo(null);
+        setSize(new Dimension(320, 460));
+        setDefaultLocation();
+//        setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         userPrefs = Preferences.userRoot().node("redmine_time_tracker_app");
         issueTableModel = new IssueTableModel();
@@ -132,46 +160,24 @@ public class TasksForm extends JFrame implements ILoginFormListener {
                 loadIssues();
             }
         });
-        idleTimer = new Timer(5 * 60 * 1000, new ActionListener() {
+        notifyTimer = new Timer(5 * 60 * 1000, new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                idleTimer.stop();
-                if (isWorkTime()) {
-                    Object[] options = {"Напомнить через 5 минут", "Отстань"};
-                    int result = JOptionPane.showOptionDialog(null, "Таймер не запущен!",
-                            getTitle(),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.INFORMATION_MESSAGE,
-                            null,
-                            options,
-                            options[0]);
-                    if (result == 0)
-                        idleTimer.restart();
-                }
+                onNotifyTimer();
             }
         });
-        offlineTimer = new Timer(5 * 60 * 1000, new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                if (!isWorkTime()) {
-                    offlineTimer.stop();
-                    Object[] options = {"Остановить", "Буду работать дальше", "Напомнить через 5 минут"};
-                    int result = JOptionPane.showOptionDialog(null, "Пора отдыхать!",
-                            getTitle(),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.INFORMATION_MESSAGE,
-                            null,
-                            options,
-                            options[0]);
-                    if (result == 0)
-                        onStopTimeEntry();
-                    else if (result == 2)
-                        offlineTimer.restart();
-                }
-            }
-        });
+        notifyTimer.setRepeats(false);
         onActivate();
     }
 
     /* Setters and getters */
+    private void setDefaultLocation() {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice defaultScreen = ge.getDefaultScreenDevice();
+        Rectangle rect = defaultScreen.getDefaultConfiguration().getBounds();
+        int x = (int) rect.getMaxX() - getWidth();
+        int y = (int) rect.getMaxY() - getHeight();
+        setLocation(x, y);
+    }
     private void setUserSession(Session session) {
         userSession = session;
         setTitle("Redmine Time Tracker - " + userSession.getUserName());
@@ -198,11 +204,22 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         }
     }
 
-    private boolean isWorkTime() {
+    private boolean isWorkingDay() {
         LocalDateTime now = LocalDateTime.now();
         int hour = now.getHour();
-        return (hour > 8 && hour < 13) || (hour > 13 && hour < 18);
+        return (hour >= userSession.getDayStartingAt() && hour < userSession.getDayEndingIn());
     }
+
+    private boolean isLunchTime() {
+        LocalDateTime now = LocalDateTime.now();
+        int hour = now.getHour();
+        return (hour >= userSession.getLanchStartingAt() && hour < userSession.getLanchEndingIn());
+    }
+
+    private boolean isWorkingTime() {
+        return isWorkingDay() && !isLunchTime();
+    }
+
     private boolean isActiveIssue() {
         return activeTimeEntry != null;
     }
@@ -221,6 +238,7 @@ public class TasksForm extends JFrame implements ILoginFormListener {
             issuesTable.setRowSelectionInterval(0, 0);
             issuesTable.requestFocus();
         }
+        issuesTable.repaint();
     }
 
     private void authorizeForm() {
@@ -231,6 +249,54 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         dialog.setVisible(true);
     }
 
+    private void onNotifyTimer() {
+        notifyTimer.setInitialDelay(60 * 1000);
+        if (isWorkingTime()) {
+            // рабочее время
+            if (!isActiveIssue()) {
+                // Если не работаем в рабочее время
+                String msg = WORK_MESSAGES[randInt(0, WORK_MESSAGES.length - 1)];
+                int result = TempDialog.showDialog(msg, TempDialog.KIND_WORK_IN);
+                switch (result) {
+                    case TempDialog.REMEMBER:
+                        notifyTimer.setInitialDelay(5 * 60 * 1000);
+                        break;
+                    default:
+                        notifyTimer.setInitialDelay(60 * 1000);
+                        break;
+                }
+            }
+
+        } else {
+            // не рабочее время
+            if (isActiveIssue()) {
+                String msg;
+                int kind;
+                // Если работаем в рабочее время
+                if (isLunchTime()) {
+                    msg = LUNCH_MESSAGES[randInt(0, LUNCH_MESSAGES.length - 1)];
+                    kind = TempDialog.KIND_REST;
+                } else {
+                    msg = "Пора домой!";
+                    kind = TempDialog.KIND_WORK_OUT;
+                }
+                int result = TempDialog.showDialog(msg, kind);
+                switch (result) {
+                    case TempDialog.REMEMBER:
+                        notifyTimer.setInitialDelay(5 * 60 * 1000);
+                        break;
+                    case TempDialog.RESUME:
+                        notifyTimer.setInitialDelay(30 * 60 * 1000);
+                        break;
+                    default:
+                        onStopTimeEntry();
+                        break;
+                }
+            }
+        }
+        notifyTimer.restart();
+    }
+
     /* Helpers */
     private String formatHours(Float timeEntry) {
         int value = Math.round(timeEntry * 60);
@@ -239,6 +305,11 @@ public class TasksForm extends JFrame implements ILoginFormListener {
         return String.format("%02d:%02d", hours, minutes);
     }
 
+    public static int randInt(int min, int max) {
+        Random rand = new Random();
+        int randomNum = rand.nextInt((max - min) + 1) + min;
+        return randomNum;
+    }
     /* Events */
     private void onLogout() {
         userPrefs.remove("redmine_url");
@@ -271,7 +342,6 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     }
 
     private void runTimers() {
-        idleTimer.start();
         workerTimer = new java.util.Timer();
         TimerTask timerTask = new TimerTask() {
             @Override
@@ -290,15 +360,11 @@ public class TasksForm extends JFrame implements ILoginFormListener {
                     }
                 } catch (final IOException e) {
                     e.printStackTrace();
-                    SwingUtilities.invokeLater(new Runnable() {
-                        public void run() {
-                            JOptionPane.showMessageDialog(null, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
                 }
             }
         };
         workerTimer.schedule(timerTask, 60000, 60000);
+        notifyTimer.start();
     }
 
     public void onSuccessLogin(String redmineUrl, String redmineApiKey, Session session) {
@@ -317,8 +383,6 @@ public class TasksForm extends JFrame implements ILoginFormListener {
             spentHoursLabel.setText(formatHours(activeTimeEntry.getHours()));
             taskListPanel.setVisible(false);
             currentTaskPanel.setVisible(true);
-            idleTimer.stop();
-            offlineTimer.restart();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
@@ -334,7 +398,6 @@ public class TasksForm extends JFrame implements ILoginFormListener {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(null, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -346,8 +409,8 @@ public class TasksForm extends JFrame implements ILoginFormListener {
             loadIssues();
             currentTaskPanel.setVisible(false);
             taskListPanel.setVisible(true);
-            offlineTimer.stop();
-            idleTimer.restart();
+            notifyTimer.setInitialDelay(5*60*1000);
+            notifyTimer.restart();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
