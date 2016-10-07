@@ -11,7 +11,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.prefs.Preferences;
 
@@ -204,14 +203,14 @@ public class TasksForm extends JFrame implements ILoginFormListener {
     }
 
     private boolean isWorkingDay() {
-        LocalDateTime now = LocalDateTime.now();
-        int hour = now.getHour();
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
         return (hour >= userSession.getDayStartingAt() && hour < userSession.getDayEndingIn());
     }
 
     private boolean isLunchTime() {
-        LocalDateTime now = LocalDateTime.now();
-        int hour = now.getHour();
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
         return (hour >= userSession.getLunchStartingAt() && hour < userSession.getLunchEndingIn());
     }
 
